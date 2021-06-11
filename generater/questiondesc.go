@@ -12,13 +12,17 @@ import (
 	"strings"
 )
 
-var leetcodePayload string = `{
+var (
+	leetcodePayload string = `{
     "operationName": "questionData",
     "variables": {
         "titleSlug": "%s"
     },
-    "query": "query questionData($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    questionId\n    questionFrontendId\n    boundTopicId\n    title\n    titleSlug\n    content\n    translatedTitle\n    translatedContent\n    isPaidOnly\n    difficulty\n    likes\n    dislikes\n    isLiked\n    similarQuestions\n    contributors {\n      username\n      profileUrl\n      avatarUrl\n      __typename\n    }\n    langToValidPlayground\n    topicTags {\n      name\n      slug\n      translatedName\n      __typename\n    }\n    companyTagStats\n    codeSnippets {\n      lang\n      langSlug\n      code\n      __typename\n    }\n    stats\n    hints\n    solution {\n      id\n      canSeeDetail\n      __typename\n    }\n    status\n    sampleTestCase\n    metaData\n    judgerAvailable\n    judgeType\n    mysqlSchemas\n    enableRunCode\n    envInfo\n    book {\n      id\n      bookName\n      pressName\n      source\n      shortDescription\n      fullDescription\n      bookImgUrl\n      pressImgUrl\n      productUrl\n      __typename\n    }\n    isSubscribed\n    isDailyQuestion\n    dailyRecordStatus\n    editorType\n    ugcQuestionId\n    style\n    exampleTestcases\n    __typename\n  }\n}\n"
-}`
+	"query": "query questionData($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    questionId\n    questionFrontendId\n       title\n    titleSlug\n    translatedTitle\n    translatedContent\n    isPaidOnly\n    difficulty\n   contributors {\n      username\n      profileUrl\n      avatarUrl\n      __typename\n    }\n    langToValidPlayground\n    topicTags {\n      name\n      slug\n      translatedName\n      __typename\n    }\n     codeSnippets {\n      lang\n      langSlug\n      code\n      __typename\n    }\n         sampleTestCase\n     }\n}\n"
+	}`
+	Api =  "https://leetcode-cn.com/graphql/"
+	Language = "Go"
+)
 
 var leetcodeTemp string = `package %s
 	
@@ -53,11 +57,11 @@ func (l LeetCodeDesc) WriteCode(path string) error {
 }
 
 func NewLeetCode(name string) (QuestionGenerater, error) {
-	res, err := RequestLeetcode(name)
+	res, err := requestLeetcode(name)
 	if err != nil {
 		return nil, err
 	}
-	markdown, code, err := FormatResponse(res)
+	markdown, code, err := formatResponse(res)
 	if err != nil {
 		return nil, err
 	}
@@ -66,27 +70,23 @@ func NewLeetCode(name string) (QuestionGenerater, error) {
 	return LeetCodeDesc{name, markdown, code}, nil
 }
 
-func RequestLeetcode(q string) (*http.Response, error) {
-	url := "https://leetcode-cn.com/graphql/"
+func requestLeetcode(q string) (*http.Response, error) {
 	method := "POST"
-
 	s := fmt.Sprintf(leetcodePayload, q)
 	payload := strings.NewReader(s)
 
 	client := &http.Client{}
-	req, err := http.NewRequest(method, url, payload)
+	req, err := http.NewRequest(method, Api, payload)
 
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Cookie", "csrftoken=UOmYariLbvZizoOWGAlvqSKTmmOTvA57P6r9Tws9iURnZgZ6PUV4EeCYiAaCE2gd")
 
 	return client.Do(req)
 }
 
-func FormatResponse(res *http.Response) (markdown string, code string, err error) {
+func formatResponse(res *http.Response) (markdown string, code string, err error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -107,7 +107,7 @@ func FormatResponse(res *http.Response) (markdown string, code string, err error
 		return markdown, code, err
 	}
 
-	code = questionInfo.GetCode("Go")
+	code = questionInfo.GetCode(Language)
 
 	return markdown, code, nil
 }
