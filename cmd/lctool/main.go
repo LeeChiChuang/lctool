@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/lcc321/lctools/generater"
+	"github.com/leechichuang/lctool/exec"
 	"github.com/urfave/cli/v2"
 	"os"
 	"runtime"
@@ -15,6 +15,17 @@ const (
 var (
 	commands = []*cli.Command{
 		{
+			Name:  "init",
+			Usage: "init a leetcode note project",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "d",
+					Usage: "the dir",
+				},
+			},
+			Action: exec.InitProject,
+		},
+		{
 			Name:  "generate",
 			Usage: "generate code files",
 			Flags: []cli.Flag{
@@ -23,15 +34,19 @@ var (
 					Usage: "the dir",
 				},
 				&cli.StringFlag{
-					Name:  "m",
+					Name:  "q",
 					Usage: "the name of question",
 				},
-				&cli.StringFlag{
+				&cli.BoolFlag{
 					Name:  "n",
-					Usage: "the number of question",
+					Usage: "the note of question",
+				},
+				&cli.BoolFlag{
+					Name:  "r",
+					Usage: "repeat",
 				},
 			},
-			Action: generater.GenerateCmd,
+			Action: exec.GenerateCmd,
 		},
 	}
 	BuildVersion = "1.1"

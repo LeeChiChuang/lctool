@@ -1,4 +1,4 @@
-package generater
+package question
 
 import "testing"
 

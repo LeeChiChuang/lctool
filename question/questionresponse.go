@@ -1,4 +1,4 @@
-package generater
+package question
 
 type QuestionResponse struct {
 	Data Data `json:"data"`
