@@ -17,15 +17,28 @@ var (
 
 *{{.addDate}}*
 `
-	repeatTpl = `{{if .IsNew}}
-# Todo List
+	repeatTpl = `{{if .IsNew}}# Todo List
 {{- else}}
 - [ ] {{.Date}} | **{{.Name}}**
 {{- end}}
 `
+
+	readmeTpl = `{{if .IsNew}}# leetcode题目分类
+|题目|难度|标签|次数|
+|--|--|--|--|
+{{- else}}
+|{{.Name}}|{{.Difficulty}}|{{range $index, $element := .Tag}} {{$element}} {{end}}|{{.Times}}|
+{{- end}}`
 	repeatInterval = [5]int{0, 1, 4, 7, 30}
 
-	todoFile = "../todo.md"
+	todoFile   = "../todo.md"
+	readmeFile = "README.md"
+)
+
+const (
+	Easy   = ":smile:"
+	Medium = ":smile::smile:"
+	Hard   = ":smile::smile::smile:"
 )
 
 type RepeatStruct struct {
@@ -34,7 +47,20 @@ type RepeatStruct struct {
 	Name  string
 }
 
+type Readme struct {
+	IsNew      bool
+	Name       string
+	Link       string
+	Difficulty string
+	Tag        []string
+	Times      string
+}
+
 func GenerateNote(q question.QGenerater) error {
+	if utils.FileExists(getNoteName(q.GetName())) {
+		return nil
+	}
+
 	err := utils.MkdirIfNotExist(q.GetName())
 	if err != nil {
 		return err
@@ -59,7 +85,6 @@ func GenerateNote(q question.QGenerater) error {
 }
 
 func GenerateRepeat(q question.QGenerater) error {
-
 	var tpl = template.Must(template.New("questionTodo").Parse(repeatTpl))
 	var fp *os.File
 	var err error
@@ -74,7 +99,7 @@ func GenerateRepeat(q question.QGenerater) error {
 			return err
 		}
 	} else {
-		fp, err = os.OpenFile(todoFile, os.O_RDWR, 0666)
+		fp, err = os.OpenFile(todoFile, os.O_RDWR|os.O_APPEND, 0666)
 		if err != nil {
 			return err
 		}
@@ -96,6 +121,39 @@ func GenerateRepeat(q question.QGenerater) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func GenerateReadme(q *question.LeetCodeDesc) error {
+	var tpl = template.Must(template.New("questionReadme").Parse(readmeTpl))
+	if !utils.FileExists(readmeFile) {
+		fd, err := os.Create(readmeFile)
+		if err != nil {
+			return err
+		}
+		r := new(Readme)
+		r.IsNew = true
+		err = tpl.Execute(fd, r)
+		if err != nil {
+			return err
+		}
+	}
+	fd, err := os.OpenFile(readmeFile, os.O_RDWR|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	row := Readme{
+		IsNew:      false,
+		Name:       q.GetMdName(),
+		Difficulty: q.GetDifficulty(),
+		Tag:        q.GetTags(),
+		Times:      ":+1:​",
+	}
+	err = tpl.Execute(fd, row)
+	if err != nil {
+		return err
 	}
 
 	return nil

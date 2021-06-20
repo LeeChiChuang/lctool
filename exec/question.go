@@ -50,6 +50,11 @@ func doGenerateCmd(dir string, q string, note bool, repeat bool) error {
 		if err != nil {
 			return err
 		}
+
+		err = GenerateReadme(lc)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = lc.WriteDesc(dir)

@@ -1,5 +1,9 @@
 package question
 
+import "fmt"
+
+var LinkPrev = "https://leetcode-cn.com/problems/"
+
 type QuestionResponse struct {
 	Data Data `json:"data"`
 }
@@ -54,4 +58,30 @@ func (q *QuestionResponse) GetCode(lang string) string {
 	}
 
 	return ""
+}
+
+func (q *QuestionResponse) GetDifficulty() string {
+	return q.Data.Question.Difficulty
+}
+
+func (q *QuestionResponse) GetTags() []string {
+	tags := q.Data.Question.TopicTags
+	res := make([]string, 0)
+	for _, v := range tags {
+		res = append(res, v.TranslatedName)
+	}
+
+	return res
+}
+
+func (q *QuestionResponse) GetMdName() string {
+	return fmt.Sprintf("[%s *%s*](%s)", q.getQuestion().TranslatedTitle, q.getQuestion().TitleSlug, q.GetLink())
+}
+
+func (q *QuestionResponse) GetLink() string {
+	return LinkPrev+q.getQuestion().TitleSlug
+}
+
+func (q *QuestionResponse) getQuestion() Question {
+	return q.Data.Question
 }

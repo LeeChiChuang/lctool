@@ -38,6 +38,7 @@ type QGenerater interface {
 }
 
 type LeetCodeDesc struct {
+	*QuestionResponse
 	name string
 	desc string
 	code string
@@ -75,18 +76,24 @@ func (l *LeetCodeDesc) GetName() string {
 	return l.name
 }
 
-func NewLeetCode(name string) (QGenerater, error) {
+func NewLeetCode(name string) (*LeetCodeDesc, error) {
 	res, err := requestLeetcode(name)
 	if err != nil {
 		return nil, err
 	}
-	markdown, code, err := formatResponse(res)
+
+	questionInfo, err := res2QuestionInfo(res)
+	if err != nil {
+		return nil, err
+	}
+
+	markdown, code, err := formatResponse(questionInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	code = fmt.Sprintf(leetcodeTemp, strings.ReplaceAll(name, "-", "_"), code)
-	return &LeetCodeDesc{name, markdown, code}, nil
+	return &LeetCodeDesc{questionInfo, name, markdown, code }, nil
 }
 
 func requestLeetcode(q string) (*http.Response, error) {
@@ -105,28 +112,31 @@ func requestLeetcode(q string) (*http.Response, error) {
 	return client.Do(req)
 }
 
-func formatResponse(res *http.Response) (markdown string, code string, err error) {
+func res2QuestionInfo(res *http.Response) (*QuestionResponse, error) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return markdown, code, err
+		return nil, err
 	}
 
 	questionInfo := NewQuestionResponse()
 	err = json.Unmarshal(body, questionInfo)
 	if err != nil {
-		return markdown, code, err
+		return nil, err
 	}
 
+	return  questionInfo, nil
+}
+
+func formatResponse(q *QuestionResponse) (markdown string, code string, err error) {
 	converter := md.NewConverter("", true, nil)
-	markdown, err = converter.ConvertString(questionInfo.GetQuestion())
+	markdown, err = converter.ConvertString(q.GetQuestion())
 	if err != nil {
 		log.Fatal(err)
 		return markdown, code, err
 	}
-
-	code = questionInfo.GetCode(Language)
+	code = q.GetCode(Language)
 
 	return markdown, code, nil
 }
